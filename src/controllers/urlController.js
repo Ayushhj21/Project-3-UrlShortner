@@ -16,39 +16,33 @@ const isValidRequestBody = function (requestBody) {
 
 const shortnerUrl = async function (req, res) {
     try {
-        const requestBody = req.body;
-
-        if (!isValidRequestBody(requestBody)) {
+        if (!isValidRequestBody(req.body)) {
             res.status(400).send({ status: false, message: 'Invalid request parameters. Please provide URL details' })
             return
         }
-        const longUrl = requestBody.longUrl.trim()
-        if (!longUrl) {
-            return res.status(400).send({ status: false, msg: "longurl is not present" })
+        if (!isValid(req.body.longUrl)) {
+            return res.status(400).send({ status: false, message: 'Invalid request parameters. Please provide URL' })
         }
+
+        const longUrl = req.body.longUrl.trim()
         const validUrl = /^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$/;
         if (!(longUrl.match(validUrl))) {
             return res.status(400).send({ status: false, msg: "longurl is not valid" })
         }
 
-        const baseUrl = ' http://localhost:3000'
+        const baseUrl = 'http://localhost:3000'
+        //generating random string
+        let urlCode = shortid.generate().match(/[a-z\A-Z]/g).join("")     //this will give only Alphabet
 
-        // if valid, we create the url code
-        const urlCode = shortid.generate()
-
-        if (isValid(longUrl)) {   ///to be checked 
-            let url = await urlModel.findOne({ longUrl })
-            // url exist and return the respose
-            if (url) {
-                res.status(403).send({ status: false, msg: "Url already in use" })
-            } else {
-                // join the generated short code the the base url
-                const shortUrl = baseUrl + '/' + urlCode
-                const urlData = { urlCode, longUrl, shortUrl }
-                const newurl = await urlModel.create(urlData);
-                return res.status(201).send({ status: true, msg: `URL created successfully`, data: newurl });
-            }
+        let url = await urlModel.findOne({ longUrl })
+        if (url) {
+            return res.status(200).send({ status: true, "data": url }) //if already exist
         }
+        //if new longUrl is there
+        const shortUrl = baseUrl + '/' + urlCode
+        const urlData = { urlCode, longUrl, shortUrl }
+        const newurl = await urlModel.create(urlData);
+        return res.status(201).send({ status: true, msg: `URL created successfully`, data: newurl });
 
     } catch (err) {
         console.log(err)
@@ -57,18 +51,13 @@ const shortnerUrl = async function (req, res) {
 }
 
 
+
 const geturl = async function (req, res) {
     try {
-        // if(!req.params){
-        //    return res.status(404).send({ status: false, message: 'Please provide shortUrl' })
-        // }
         const urlCode = req.params.urlCode.trim()
-        console.log(urlCode)  //T.D If we are not giving urlCode (value) to path params then it should give false message but when we are giving space to it, it is giving the false message.why?
-        // if(urlCode.length<0){
-        //     return res.status(400).send({ status: false, message: 'Please provide valid urlCode' })
-        // }
+        console.log(urlCode)
         if (!isValid(urlCode)) {
-            res.status(400).send({ status: false, message: 'Please provide valid urlCode' })
+            res.status(400).send({ status: false, message: 'Please provide valid urlCode' }) //check this
         }
         const url = await urlModel.findOne({ urlCode: urlCode })
         if (url) {
@@ -81,6 +70,8 @@ const geturl = async function (req, res) {
         res.status(500).send('Server Error')
     }
 }
+
+
 
 
 
