@@ -55,6 +55,7 @@ const createurl = async function (req, res) {
         const baseUrl = 'http://localhost:3000'
         //---GENERATE URLCODE
         let urlCode = shortid.generate().match(/[a-z\A-Z]/g).join("") //---this will give only Alphabet
+        urlCode=urlCode.toLowerCase()   //urlcode will be in lowercase
 
         //---FETCH THE DATA IN REDIS
         let checkforUrl = await GET_ASYNC(`${longUrl}`)
@@ -84,6 +85,7 @@ const createurl = async function (req, res) {
 const geturl = async function (req, res) {
     try {
         const urlCode = req.params.urlCode.trim().toLowerCase()
+    
         if (!isValid(urlCode)) {
             res.status(400).send({ status: false, message: 'Please provide valid urlCode' })
         }
